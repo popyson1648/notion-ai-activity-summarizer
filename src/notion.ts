@@ -89,7 +89,7 @@ export async function saveSummaryToNotion(
   }
   const titlePropertyName = propNames.title;
   const datePropertyName = propNames.date;
-  const title = format(targetDate, 'yyyy-MM-dd') + ' Summary';
+  const title = format(targetDate, 'yyyy-MM-dd');
 
   const existingPageId = await findExistingSummaryPage(notion, databaseId, title, titlePropertyName);
   if (existingPageId) {
