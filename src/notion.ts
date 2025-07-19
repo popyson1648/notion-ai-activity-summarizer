@@ -31,16 +31,18 @@ export async function fetchDailyLogs(notion: Client, databaseId: string, targetD
     throw new Error(`Log database ${databaseId} must have one 'title' and one 'created_time' property.`);
   }
   
+  // This function now trusts that targetDate is the correct date.
+  // It does not apply any timezone logic itself.
   const jstDate = toZonedTime(targetDate, TIME_ZONE);
-  const startOfJstDay = startOfDay(jstDate);
-  const startOfNextJstDay = startOfDay(addDays(jstDate, 1));
+  const startOfDayToQuery = startOfDay(jstDate);
+  const startOfNextDayToQuery = startOfDay(addDays(jstDate, 1));
 
   const response: QueryDatabaseResponse = await notion.databases.query({
     database_id: databaseId,
     filter: {
       and: [
-        { property: propNames.createdTime, created_time: { on_or_after: startOfJstDay.toISOString() } },
-        { property: propNames.createdTime, created_time: { before: startOfNextJstDay.toISOString() } },
+        { property: propNames.createdTime, created_time: { on_or_after: startOfDayToQuery.toISOString() } },
+        { property: propNames.createdTime, created_time: { before: startOfNextDayToQuery.toISOString() } },
       ],
     },
   });
@@ -89,7 +91,7 @@ export async function saveSummaryToNotion(
   }
   const titlePropertyName = propNames.title;
   const datePropertyName = propNames.date;
-  const title = format(targetDate, 'yyyy-MM-dd');
+  const title = format(toZonedTime(targetDate, TIME_ZONE), 'yyyy-MM-dd');
 
   const existingPageId = await findExistingSummaryPage(notion, databaseId, title, titlePropertyName);
   if (existingPageId) {
@@ -142,4 +144,10 @@ export async function saveSummaryToNotion(
     properties: pageProperties,
     children: blocks,
   });
+}
+
+
+// Helper function to convert UTC date to JST date
+export function getJstDate(date: Date): Date {
+  return toZonedTime(date, TIME_ZONE);
 }
