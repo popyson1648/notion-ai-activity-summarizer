@@ -36,7 +36,6 @@ describe('fetchDailyLogs', () => {
   });
 
   it('should query Notion with the correct JST day boundaries', async () => {
-    // Target JST: 2025-07-20
     const targetDate = new Date('2025-07-20T12:00:00.000Z'); // A time within the target JST day
 
     await fetchDailyLogs(notion, 'test_db_id', targetDate);
@@ -44,13 +43,11 @@ describe('fetchDailyLogs', () => {
     expect(mockQuery).toHaveBeenCalledTimes(1);
     const queryFilter = mockQuery.mock.calls[0][0].filter as any;
 
-    // Start of 2025-07-20 JST is 2025-07-19T15:00:00.000Z
     const expectedStart = '2025-07-19T15:00:00.000Z';
-    // End of 2025-07-20 JST is 2025-07-20T14:59:59.999Z, so the 'before' query should be the start of the next day
     const expectedEnd = '2025-07-20T15:00:00.000Z';
 
     expect(queryFilter.and[0].created_time.on_or_after).toBe(expectedStart);
-    expect(queryFilter.and[1].created_time.before).toBe(expectedEnd); // This will fail with current code
+    expect(queryFilter.and[1].created_time.before).toBe(expectedEnd);
   });
 });
 
