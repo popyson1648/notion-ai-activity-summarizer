@@ -1,3 +1,5 @@
+import { toZonedTime } from 'date-fns-tz';
+
 // Type for a single log entry
 export interface LogEntry {
   content: string;
@@ -11,6 +13,8 @@ export interface Summaries {
   threeHourly: string[][];
 }
 
+const TIME_ZONE = 'Asia/Tokyo';
+
 export function summarizeLogs(logs: LogEntry[]): Summaries {
   const summaries: Summaries = {
     today: [],
@@ -20,7 +24,8 @@ export function summarizeLogs(logs: LogEntry[]): Summaries {
   };
 
   for (const log of logs) {
-    const hour = log.createdAt.getHours();
+    const jstDate = toZonedTime(log.createdAt, TIME_ZONE);
+    const hour = jstDate.getHours();
     const content = log.content;
 
     summaries.today.push(content);

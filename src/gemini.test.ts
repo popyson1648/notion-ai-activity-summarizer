@@ -18,7 +18,7 @@ describe('generateSummary', () => {
   });
 
   it('should return "none" for empty logs', async () => {
-    const summary = await generateSummary([]);
+    const summary = await generateSummary([], 'broad');
     expect(summary).toBe('none');
   });
 
@@ -26,7 +26,7 @@ describe('generateSummary', () => {
     mockGenerateContent.mockResolvedValue({
       response: { text: () => 'AI summary' },
     });
-    await generateSummary(['log 1']);
+    await generateSummary(['log 1'], 'broad');
     expect(mockGetGenerativeModel).toHaveBeenCalledWith({ model: 'gemini-1.5-flash-latest' });
   });
 });
