@@ -8,7 +8,7 @@ This project is a serverless function designed to automatically generate daily s
 
 ## Features
 
-- **Fetches Daily Logs**: Retrieves all entries for the current day (in Japan Standard Time) from a specified Notion database.
+- **Flexible Date Targeting**: Retrieves logs for a specific date. You can specify a date with `YYYY-MM-DD` format, use relative terms like `yesterday`, or default to the current day (in Japan Standard Time).
 - **Intelligent Summarization**: Uses the **Gemini 1.5 Flash** model to generate summaries with controlled abstraction. Daily summaries are highly abstracted, while hourly summaries provide structured detail.
 - **Context-Aware**: Retains important proper nouns (names, projects, etc.) in summaries to ensure clarity.
 - **Resilient API Calls**: Includes retry logic with exponential backoff for calls to the Gemini API.
@@ -94,11 +94,48 @@ This is where the AI will save its summaries.
 
 ### 4. Local Testing
 
-You can run an end-to-end test locally to ensure everything is configured correctly. This will connect to the actual Notion and Gemini APIs.
+You can run an end-to-end test locally to ensure everything is configured correctly. This script connects to the actual Notion and Gemini APIs and can be run for different dates.
 
+**Usage:**
 ```bash
-npx ts-node scripts/run-e2e-test.ts
+npx ts-node scripts/run-e2e-test.ts [date|day]
 ```
+
+**Examples:**
+
+- **Test for today (default):**
+  ```bash
+  npx ts-node scripts/run-e2e-test.ts
+  ```
+
+- **Test for a specific date:**
+  ```bash
+  npx ts-node scripts/run-e2e-test.ts 2025-07-19
+  ```
+
+- **Test for yesterday:**
+  ```bash
+  npx ts-node scripts/run-e2e-test.ts yesterday
+  ```
+
+## Usage / Endpoint
+
+The function is triggered by an HTTP `GET` request. You can control which day's summary to generate using the following query parameters.
+
+| Parameter | Format | Description |
+| :--- | :--- | :--- |
+| `date` | `YYYY-MM-DD` | Generates a summary for the specified date. (e.g., `2025-07-19`) |
+| `day` | `today`, `yesterday`, `day_before_yesterday` | Generates a summary for a relative day. |
+
+**Behavior:**
+- If `date` is provided, it takes priority over `day`.
+- If no parameters are given, it defaults to `today`.
+- Future dates or invalid values will result in an error.
+
+**Example URLs:**
+- `.../notionActivityLog?date=2025-07-15`
+- `.../notionActivityLog?day=yesterday`
+- `.../notionActivityLog` (for today)
 
 ## Deployment
 
