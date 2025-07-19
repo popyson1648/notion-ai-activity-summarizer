@@ -55,10 +55,27 @@ describe('notionActivityLog Cloud Function', () => {
   describe('Date Parameter Handling', () => {
     const today = toZonedTime(new Date(), TIME_ZONE);
 
-    it('should target today when no parameters are provided', async () => {
+    it('should target today in JST even when the server is in UTC', async () => {
+      process.env.TZ = 'UTC'; // Force UTC timezone for this test
+
+      // Simulate a time that is 7 AM in JST but 10 PM the previous day in UTC.
+      // JST: 2025-07-20 07:00:00
+      // UTC: 2025-07-19 22:00:00
+      const mockDate = new Date('2025-07-19T22:00:00.000Z');
+      jest.useFakeTimers().setSystemTime(mockDate);
+
       await notionActivityLog(mockReq, mockRes);
+
       const receivedDate = mockFetchDailyLogs.mock.calls[0][2];
-      expect(format(receivedDate, 'yyyy-MM-dd')).toBe(format(today, 'yyyy-MM-dd'));
+      
+      // The date passed to the fetch function should be for the 20th, not the 19th.
+      // We format it in UTC to get the 'YYYY-MM-DD' part of the timestamp.
+      const formattedDate = format(receivedDate, 'yyyy-MM-dd');
+      
+      expect(formattedDate).toBe('2025-07-20');
+
+      jest.useRealTimers();
+      delete process.env.TZ;
     });
 
     it('should target a specific date when "date" parameter is provided', async () => {
