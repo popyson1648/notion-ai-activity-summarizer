@@ -1,66 +1,42 @@
-import { Client } from '@notionhq/client';
-import { format } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
-import { summarizeLogs } from '../src/core';
-import { fetchDailyLogs, saveSummaryToNotion } from '../src/notion';
-import { generateSummary } from '../src/gemini';
-import 'dotenv/config';
+import { notionActivityLog } from '../src/main';
+import { HttpFunction } from '@google-cloud/functions-framework';
 
-async function runTest() {
-  console.log('🚀 Starting Final End-to-End Test...');
+async function run() {
+  console.log('🚀 Starting E2E Test...');
 
-  const notion = new Client({ auth: process.env.NOTION_API_KEY });
-  const logDatabaseId = process.env.NOTION_DATABASE_ID;
-  const summaryDatabaseId = process.env.SUMMARY_DATABASE_ID;
+  const args = process.argv.slice(2);
+  const query: { date?: string; day?: string } = {};
+  let dateArg = 'today';
 
-  if (!logDatabaseId || !summaryDatabaseId || !process.env.GEMINI_API_KEY || !process.env.NOTION_API_KEY) {
-    console.error('❌ Missing environment variables. Please check your .env file.');
-    return;
+  if (args[0]) {
+    dateArg = args[0];
+    if (args[0].match(/^\d{4}-\d{2}-\d{2}$/)) {
+      query.date = args[0];
+    } else {
+      query.day = args[0];
+    }
   }
+  
+  console.log(`Targeting: ${dateArg}`);
+
+  const mockReq: any = { query };
+  const mockRes: any = {
+    status: (code: number) => {
+      console.log(`[RESPONSE] Status: ${code}`);
+      return {
+        send: (message: string) => console.log(`[RESPONSE] Body: ${message}`),
+      };
+    },
+    send: (message: string) => console.log(`[RESPONSE] Body: ${message}`),
+  };
 
   try {
-    const targetDate = toZonedTime(new Date(), 'Asia/Tokyo');
-    console.log(`[1/4] Fetching logs for today (${format(targetDate, 'yyyy-MM-dd')})...`);
-    const logs = await fetchDailyLogs(notion, logDatabaseId, targetDate);
-    console.log(`✅ Found ${logs.length} logs.`);
-
-    console.log('[2/4] Categorizing logs...');
-    const categorizedLogs = summarizeLogs(logs);
-    
-    console.log('[3/4] Generating AI summaries with controlled abstraction...');
-    const [
-      todaySummary,
-      amSummary,
-      pmSummary,
-      ...threeHourlySummaries
-    ] = await Promise.all([
-      generateSummary(categorizedLogs.today, 'broad'),
-      generateSummary(categorizedLogs.am, 'broad'),
-      generateSummary(categorizedLogs.pm, 'broad'),
-      ...categorizedLogs.threeHourly.map(logs => generateSummary(logs, 'detailed'))
-    ]);
-    console.log('✅ AI summaries generated.');
-
-    const aiSummaries: Record<string, string> = {
-      today: todaySummary,
-      am: amSummary,
-      pm: pmSummary,
-    };
-    threeHourlySummaries.forEach((summary, index) => {
-      aiSummaries[`threeHourly${index}`] = summary;
-    });
-
-    console.log('[4/4] Saving final summary to Notion...');
-    await saveSummaryToNotion(notion, summaryDatabaseId, targetDate, aiSummaries);
-    console.log('✅ Summary saved to Notion.');
-
-    console.log('\n🎉 E2E Test Completed Successfully!');
-    console.log('👉 Please verify the new page. It should now contain truly intelligent, structured summaries.');
-
+    const target = notionActivityLog as HttpFunction;
+    await target(mockReq, mockRes);
+    console.log('\n🎉 E2E Test Script Finished.');
   } catch (error) {
-    console.error('❌ E2E Test Failed:');
-    console.error(error);
+    console.error('❌ E2E Test Script Failed:', error);
   }
 }
 
-runTest();
+run();
