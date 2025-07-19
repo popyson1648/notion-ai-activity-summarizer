@@ -1,10 +1,13 @@
 import { Client } from '@notionhq/client';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { summarizeLogs } from './core';
 import { fetchDailyLogs, saveSummaryToNotion } from './notion';
 import { generateSummary } from './gemini';
 import { HttpFunction } from '@google-cloud/functions-framework';
 require('dotenv').config();
+
+const TIME_ZONE = 'Asia/Tokyo';
 
 export const notionActivityLog: HttpFunction = async (req, res) => {
   const notion = new Client({ auth: process.env.NOTION_API_KEY });
@@ -19,7 +22,11 @@ export const notionActivityLog: HttpFunction = async (req, res) => {
   }
 
   try {
-    const { logs, targetDate } = await fetchDailyLogs(notion, logDatabaseId);
+    const dateQuery = req.query.date as string;
+    const targetDate = dateQuery ? parseISO(dateQuery) : new Date();
+    const zonedTargetDate = toZonedTime(targetDate, TIME_ZONE);
+
+    const logs = await fetchDailyLogs(notion, logDatabaseId, zonedTargetDate);
     const categorizedLogs = summarizeLogs(logs);
 
     const [
@@ -44,9 +51,9 @@ export const notionActivityLog: HttpFunction = async (req, res) => {
       aiSummaries[`threeHourly${index}`] = summary;
     });
     
-    await saveSummaryToNotion(notion, summaryDatabaseId, targetDate, aiSummaries);
+    await saveSummaryToNotion(notion, summaryDatabaseId, zonedTargetDate, aiSummaries);
     
-    const successMessage = `Successfully created AI-powered summary page for ${format(targetDate, 'yyyy-MM-dd')}`;
+    const successMessage = `Successfully created AI-powered summary page for ${format(zonedTargetDate, 'yyyy-MM-dd')}`;
     console.log(successMessage);
     res.status(200).send(successMessage);
 
