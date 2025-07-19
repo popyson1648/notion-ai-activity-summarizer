@@ -1,6 +1,10 @@
 # Notion AI Activity Summarizer 
 
-This project is a serverless function designed to automatically generate daily summaries of your activities logged in a Notion database. It uses the Gemini AI model to create concise, human-readable summaries and saves them to another Notion database, providing a powerful overview of your day.
+This project is a serverless function designed to automatically generate daily summaries of your activities logged in a Notion database. It uses the Gemini AI model to create concise, human-readable summaries and saves them to another Notion database, providing a overview of your day.
+
+## Demo
+
+![Demo](https://raw.githubusercontent.com/popyson1648/notion-ai-activity-summarizer/main/assets/demo.gif)
 
 ## Features
 
@@ -127,3 +131,4 @@ The function is triggered by a simple HTTP request, giving you complete flexibil
 In demonstrations, a Notion "Button" that opens the function's URL in a web browser is used for manual triggering. 
 While this is a valid approach, it may not be the most optimal solution for all workflows. 
 You are encouraged to explore and implement a trigger method that best suits your needs, such as using automation services (e.g., Make, Zapier), custom scripts, or scheduled jobs (e.g., Google Cloud Scheduler).
+
