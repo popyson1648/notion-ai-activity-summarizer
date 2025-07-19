@@ -1,5 +1,6 @@
 import { Client } from '@notionhq/client';
 import { format } from 'date-fns';
+import { toZonedTime } from 'date-fns-tz';
 import { summarizeLogs } from '../src/core';
 import { fetchDailyLogs, saveSummaryToNotion } from '../src/notion';
 import { generateSummary } from '../src/gemini';
@@ -18,9 +19,10 @@ async function runTest() {
   }
 
   try {
-    console.log(`[1/4] Fetching logs for today (JST)...`);
-    const { logs, targetDate } = await fetchDailyLogs(notion, logDatabaseId);
-    console.log(`✅ Found ${logs.length} logs for ${format(targetDate, 'yyyy-MM-dd')}.`);
+    const targetDate = toZonedTime(new Date(), 'Asia/Tokyo');
+    console.log(`[1/4] Fetching logs for today (${format(targetDate, 'yyyy-MM-dd')})...`);
+    const logs = await fetchDailyLogs(notion, logDatabaseId, targetDate);
+    console.log(`✅ Found ${logs.length} logs.`);
 
     console.log('[2/4] Categorizing logs...');
     const categorizedLogs = summarizeLogs(logs);

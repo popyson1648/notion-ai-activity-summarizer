@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client';
-import { startOfDay, endOfDay, format } from 'date-fns';
+import { startOfDay, addDays, format } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { PageObjectResponse, QueryDatabaseResponse, CreatePageParameters, BlockObjectRequest } from '@notionhq/client/build/src/api-endpoints';
 import { LogEntry } from './core';
@@ -31,15 +31,16 @@ export async function fetchDailyLogs(notion: Client, databaseId: string, targetD
     throw new Error(`Log database ${databaseId} must have one 'title' and one 'created_time' property.`);
   }
   
-  const startOfJstDay = startOfDay(targetDate);
-  const endOfJstDay = endOfDay(targetDate);
+  const jstDate = toZonedTime(targetDate, TIME_ZONE);
+  const startOfJstDay = startOfDay(jstDate);
+  const startOfNextJstDay = startOfDay(addDays(jstDate, 1));
 
   const response: QueryDatabaseResponse = await notion.databases.query({
     database_id: databaseId,
     filter: {
       and: [
         { property: propNames.createdTime, created_time: { on_or_after: startOfJstDay.toISOString() } },
-        { property: propNames.createdTime, created_time: { before: endOfJstDay.toISOString() } },
+        { property: propNames.createdTime, created_time: { before: startOfNextJstDay.toISOString() } },
       ],
     },
   });

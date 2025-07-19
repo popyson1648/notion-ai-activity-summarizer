@@ -3,7 +3,7 @@ import * as notion from './notion';
 import * as core from './core';
 import * as gemini from './gemini';
 import { subDays, format, addDays } from 'date-fns';
-import { toZonedTime } from 'date-fns-tz';
+import { toZonedTime, formatInTimeZone } from 'date-fns-tz';
 
 jest.mock('./notion');
 jest.mock('./core');
@@ -118,6 +118,20 @@ describe('notionActivityLog Cloud Function', () => {
 
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.send).toHaveBeenCalledWith(expect.stringContaining('Invalid day parameter'));
+    });
+
+    it('should target today in JST even when the server is on a different UTC day', async () => {
+      // Simulate 2025-07-20 07:00:00 JST, which is 2025-07-19 22:00:00 UTC
+      const mockDate = new Date('2025-07-19T22:00:00.000Z');
+      jest.useFakeTimers().setSystemTime(mockDate);
+
+      await notionActivityLog(mockReq, mockRes);
+
+      const receivedDate = mockFetchDailyLogs.mock.calls[0][2];
+      // The summary should be for 2025-07-20 in JST, not 2025-07-19
+      expect(formatInTimeZone(receivedDate, TIME_ZONE, 'yyyy-MM-dd')).toBe('2025-07-20');
+
+      jest.useRealTimers(); // Restore real timers
     });
   });
 });
