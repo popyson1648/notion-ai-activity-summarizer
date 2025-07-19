@@ -25,15 +25,14 @@ async function findPropertyNames(notion: Client, databaseId: string, types: ('ti
   return names;
 }
 
-export async function fetchDailyLogs(notion: Client, databaseId: string): Promise<{ logs: LogEntry[], targetDate: Date }> {
+export async function fetchDailyLogs(notion: Client, databaseId: string, targetDate: Date): Promise<LogEntry[]> {
   const propNames = await findPropertyNames(notion, databaseId, ['title', 'created_time']);
   if (!propNames.title || !propNames.createdTime) {
     throw new Error(`Log database ${databaseId} must have one 'title' and one 'created_time' property.`);
   }
   
-  const nowInJst = toZonedTime(new Date(), TIME_ZONE);
-  const startOfJstDay = startOfDay(nowInJst);
-  const endOfJstDay = endOfDay(nowInJst);
+  const startOfJstDay = startOfDay(targetDate);
+  const endOfJstDay = endOfDay(targetDate);
 
   const response: QueryDatabaseResponse = await notion.databases.query({
     database_id: databaseId,
@@ -61,7 +60,7 @@ export async function fetchDailyLogs(notion: Client, databaseId: string): Promis
     return { content, createdAt: new Date(page.created_time) };
   });
 
-  return { logs, targetDate: nowInJst };
+  return logs;
 }
 
 async function findExistingSummaryPage(notion: Client, databaseId: string, title: string, titlePropertyName: string): Promise<string | null> {
