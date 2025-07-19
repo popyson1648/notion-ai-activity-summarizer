@@ -1,5 +1,5 @@
 import { Client } from '@notionhq/client';
-import { format, parseISO, subDays, startOfToday, isValid, isFuture } from 'date-fns';
+import { format, parseISO, subDays, startOfDay, isValid, isFuture } from 'date-fns';
 import { toZonedTime } from 'date-fns-tz';
 import { summarizeLogs } from './core';
 import { fetchDailyLogs, saveSummaryToNotion } from './notion';
@@ -17,7 +17,6 @@ class HttpError extends Error {
 
 function getTargetDate(query: Request['query']): Date {
   const { date, day } = query;
-  const today = startOfToday();
 
   if (date) {
     if (typeof date !== 'string') throw new HttpError('Invalid date parameter', 400);
@@ -29,6 +28,7 @@ function getTargetDate(query: Request['query']): Date {
 
   if (day) {
     if (typeof day !== 'string') throw new HttpError('Invalid day parameter', 400);
+    const today = startOfDay(toZonedTime(new Date(), TIME_ZONE));
     switch (day) {
       case 'today':
         return today;
@@ -41,7 +41,8 @@ function getTargetDate(query: Request['query']): Date {
     }
   }
 
-  return today;
+  // Default to today in JST
+  return startOfDay(toZonedTime(new Date(), TIME_ZONE));
 }
 
 export const notionActivityLog: HttpFunction = async (req, res) => {
