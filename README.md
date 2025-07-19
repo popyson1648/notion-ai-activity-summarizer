@@ -151,7 +151,7 @@ gcloud functions deploy notionAIActivitySummarizer\
   --entry-point notionActivityLog \
   --trigger-http \
   --allow-unauthenticated \
-  --set-env-vars="NOTION_API_KEY=<YOUR_NOTION_API_KEY>,NOTION_DATABASE_ID=<YOUR_LOG_DATABASE_ID>,SUMMARY_DATABASE_ID=<YOUR_SUMMARY_DATABASE_ID>,GEMINI_API_KEY=<YOUR_GEMINI_API_KEY>"
+  --set-env-vars="TZ=Asia/Tokyo,NOTION_API_KEY=<YOUR_NOTION_API_KEY>,NOTION_DATABASE_ID=<YOUR_LOG_DATABASE_ID>,SUMMARY_DATABASE_ID=<YOUR_SUMMARY_DATABASE_ID>,GEMINI_API_KEY=<YOUR_GEMINI_API_KEY>"
 ```
 *Note: For production, you may want to remove `--allow-unauthenticated` and set up a secure trigger, such as Cloud Scheduler with OIDC authentication.*
 
