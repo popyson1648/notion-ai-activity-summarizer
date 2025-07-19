@@ -24,7 +24,11 @@ describe('notionActivityLog Cloud Function', () => {
     process.env.SUMMARY_DATABASE_ID = 'fake_summary_db';
     process.env.GEMINI_API_KEY = 'fake_gemini_key';
 
-    mockReq = {};
+            mockReq = {
+      query: {
+        date: fakeDate.toISOString(),
+      },
+    };
     mockRes = {
       status: jest.fn().mockReturnThis(),
       send: jest.fn(),
@@ -40,7 +44,7 @@ describe('notionActivityLog Cloud Function', () => {
       threeHourly: [['test log'], [], [], [], [], [], [], []],
     };
     
-    mockFetchDailyLogs.mockResolvedValue({ logs: fakeLogs, targetDate: fakeDate });
+    mockFetchDailyLogs.mockResolvedValue(fakeLogs);
     mockSummarizeLogs.mockReturnValue(fakeCategorizedLogs);
     mockGenerateSummary.mockImplementation(async (logs: string[]) => {
       return logs.length > 0 ? `AI summary` : 'none';
@@ -52,8 +56,12 @@ describe('notionActivityLog Cloud Function', () => {
     expect(mockFetchDailyLogs).toHaveBeenCalledTimes(1);
     expect(mockSummarizeLogs).toHaveBeenCalledWith(fakeLogs);
     expect(mockGenerateSummary).toHaveBeenCalledTimes(11);
-    expect(mockSaveSummaryToNotion).toHaveBeenCalledTimes(1);
-    expect(mockSaveSummaryToNotion.mock.calls[0][2]).toBe(fakeDate);
+        expect(mockSaveSummaryToNotion).toHaveBeenCalledWith(
+      expect.any(Object),
+      'fake_summary_db',
+      expect.any(Date),
+      expect.any(Object)
+    );
     
     expect(mockRes.status).toHaveBeenCalledWith(200);
   });

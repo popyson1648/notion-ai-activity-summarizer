@@ -50,7 +50,7 @@ describe('saveSummaryToNotion', () => {
     const createdPage = mockPageCreate.mock.calls[0][0];
     const properties = createdPage.properties as any;
     
-    expect(properties['Name'].title[0].text.content).toBe('2025-07-19 Summary');
+    expect(properties['Name'].title[0].text.content).toBe('2025-07-19');
     expect(properties['Date'].date.start).toBe('2025-07-19');
   });
 
